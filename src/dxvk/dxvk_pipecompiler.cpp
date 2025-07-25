@@ -6,16 +6,27 @@ namespace dxvk {
 
   DxvkPipelineCompiler::DxvkPipelineCompiler(const DxvkDevice* device) {
     std::string useAllCores = env::getEnvVar("DXVK_ALL_CORES");
+
+    // Get number of CPU logical threads
     uint32_t numCpuCores = dxvk::thread::hardware_concurrency();
-    uint32_t numWorkers = ((std::max(1u, numCpuCores) - 1) * 5) / 7;
-    
-    if (numWorkers <  1) numWorkers =  1;
-    if (numWorkers > 32) numWorkers = 32;
-    
+
+
+    // Use (number of CPU logical threads - 2) pipeline workers.
+    // Less stuttering when compiling shaders while playing,
+    // in comparison to using all CPU logical threads.
+    uint32_t numWorkers  = (std::max(1u, numCpuCores) - 2);
+
+
+    // Catching systems with less than 4 threads
+    if (numWorkers <  1) numWorkers = 1;
+    // Catching systems with more than 64 threads
+    if (numWorkers > 64) numWorkers = 64;
+
+
     // Reduce worker count on 32-bit to save adderss space
     if (env::is32BitHostPlatform())
       numWorkers = std::min(numWorkers, 16u);
-    
+
     if (device->config().numAsyncThreads > 0)
       numWorkers = device->config().numAsyncThreads;
 
