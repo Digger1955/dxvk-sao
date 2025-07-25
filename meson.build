@@ -11,8 +11,8 @@ dxvk_is_msvc = cpp.get_id() == 'msvc'
 compiler_args = [
   '-O3',
   '-pipe',
-  '-march=x86-64',
-  '-mtune=x86-64',
+  '-march=x86-64-v2',
+  '-mtune=generic',
   '-msse',
   '-msse2',
   '-mfpmath=sse',
@@ -92,7 +92,9 @@ if platform == 'windows'
   else
     # Windows (MSVC) Compiler Options
     compiler_args += [
-      '/arch:SSE2',
+      '/arch:AVX2',
+      '/favor:AMD64',
+      '/d2vzeroupper',
       '/O2',
       '/Ob3',
       '/GL',
