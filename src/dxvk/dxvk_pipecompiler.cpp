@@ -36,7 +36,7 @@ namespace dxvk {
     Logger::info(str::format("DXVK: Using ", numWorkers, " async compiler threads"));
 
     m_compilerThreads.reserve(numWorkers);
-    for (uint32_t i = 0; i < numWorkers; i++)
+    for (uint32_t i = 0; i < numWorkers; i++){
       m_compilerThreads.emplace_back([this] { this->runCompilerThread(); });
   }
 
