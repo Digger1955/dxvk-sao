@@ -58,39 +58,34 @@ namespace dxvk {
     const DxvkRenderPass*                renderPass) {
     {
       std::lock_guard<std::mutex> lock(m_compilerLock);
-      m_compilerQueue.emplace(PipelineEntry{ pipeline, state, renderPass });
-    }
+    m_compilerQueue.push({ pipeline, state, renderPass });
     m_compilerCond.notify_one();
   }
 
   void DxvkPipelineCompiler::runCompilerThread() {
     env::setThreadName("dxvk-pcompiler");
 
-    while (true) {
-      std::vector<PipelineEntry> tasks;
+    while (!m_compilerStop.load()) {
+      PipelineEntry entry;
 
-      {
-        std::unique_lock<std::mutex> lock(m_compilerLock);
+      { std::unique_lock<std::mutex> lock(m_compilerLock);
+
         m_compilerCond.wait(lock, [this] {
-          return m_compilerStop.load() || !m_compilerQueue.empty();
+          return m_compilerStop.load()
+              || m_compilerQueue.size() != 0;
         });
 
-        if (m_compilerStop.load() && m_compilerQueue.empty())
-          break;
-
-        while (!m_compilerQueue.empty()) {
-          tasks.push_back(std::move(m_compilerQueue.front()));
+        if (m_compilerQueue.size() != 0) {
+          entry = std::move(m_compilerQueue.front());
           m_compilerQueue.pop();
         }
       }
 
-      for (auto& entry : tasks) {
-        if (entry.pipeline && entry.renderPass) {
-          if (entry.pipeline->compilePipeline(entry.state, entry.renderPass))
-            entry.pipeline->writePipelineStateToCache(entry.state, entry.renderPass->format());
-        }
+      if (entry.pipeline != nullptr && entry.renderPass != nullptr &&
+          entry.pipeline->compilePipeline(entry.state, entry.renderPass)) {
+          entry.pipeline->writePipelineStateToCache(entry.state, entry.renderPass->format());
       }
     }
   }
 
-} // namespace dxvk
+}
