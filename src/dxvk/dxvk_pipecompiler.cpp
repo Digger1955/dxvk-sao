@@ -35,32 +35,36 @@ namespace dxvk {
 
     Logger::info(str::format("DXVK: Using ", numWorkers, " async compiler threads"));
 
-    m_compilerThreads.reserve(numWorkers);
-    for (uint32_t i = 0; i < numWorkers; i++){
-      m_compilerThreads.emplace_back([this] { this->runCompilerThread(); });
+    // Start the compiler threads
+    m_compilerThreads.resize(numWorkers);
+
+    for (uint32_t i = 0; i < numWorkers; i++) {
+      m_compilerThreads.at(i) = dxvk::thread(
+        [this] { this->runCompilerThread(); });
+    }
   }
 
+
   DxvkPipelineCompiler::~DxvkPipelineCompiler() {
-    {
-      std::lock_guard<std::mutex> lock(m_compilerLock);
+    { std::lock_guard<std::mutex> lock(m_compilerLock);
       m_compilerStop.store(true);
     }
-    
+
     m_compilerCond.notify_all();
-    
     for (auto& thread : m_compilerThreads)
       thread.join();
   }
 
+
   void DxvkPipelineCompiler::queueCompilation(
-    DxvkGraphicsPipeline*                pipeline,
-    const DxvkGraphicsPipelineStateInfo& state,
-    const DxvkRenderPass*                renderPass) {
-    {
-      std::lock_guard<std::mutex> lock(m_compilerLock);
+    DxvkGraphicsPipeline*                   pipeline,
+    const DxvkGraphicsPipelineStateInfo&    state,
+    const DxvkRenderPass*                   renderPass) {
+    std::lock_guard<std::mutex> lock(m_compilerLock);
     m_compilerQueue.push({ pipeline, state, renderPass });
     m_compilerCond.notify_one();
   }
+
 
   void DxvkPipelineCompiler::runCompilerThread() {
     env::setThreadName("dxvk-pcompiler");
