@@ -13,17 +13,17 @@ namespace dxvk {
   class DxvkDevice;
   class DxvkGraphicsPipeline;
   class DxvkGraphicsPipelineStateInfo;
-  class DxvkRenderPass;
 
   /**
    * \brief Pipeline compiler
    *
-   * Asynchronous pipeline compiler optimized for performance
+   * Asynchronous pipeline compiler
    */
   class DxvkPipelineCompiler : public RcObject {
 
   public:
-    explicit DxvkPipelineCompiler(const DxvkDevice* device);
+
+    DxvkPipelineCompiler(const DxvkDevice* device);
     ~DxvkPipelineCompiler();
 
     /**
@@ -33,12 +33,12 @@ namespace dxvk {
      * pipeline instances asynchronously.
      * \param [in] pipeline The pipeline object
      * \param [in] state The pipeline state info object
-     * \param [in] renderPass The render pass object
+     * \param [in] renderPass
      */
     void queueCompilation(
-      DxvkGraphicsPipeline*                pipeline,
-      const DxvkGraphicsPipelineStateInfo& state,
-      const DxvkRenderPass*                renderPass);
+      DxvkGraphicsPipeline*                   pipeline,
+      const DxvkGraphicsPipelineStateInfo&    state,
+      const DxvkRenderPass*                   renderPass);
 
   private:
 
