@@ -37,25 +37,27 @@ namespace dxvk {
 
     // Reserve and create the worker threads
     m_compilerThreads.reserve(numWorkers);
-    for (uint32_t i = 0; i < numWorkers; i++) {
+    for (uint32_t i = 0; i < numWorkers; i++)
       m_compilerThreads.emplace_back([this] { this->runCompilerThread(); });
+
     }
-  }
 
   DxvkPipelineCompiler::~DxvkPipelineCompiler() {
     {
       std::lock_guard<std::mutex> lock(m_compilerLock);
       m_compilerStop.store(true);
     }
+    
     m_compilerCond.notify_all();
+    
     for (auto& thread : m_compilerThreads)
       thread.join();
   }
 
   void DxvkPipelineCompiler::queueCompilation(
-    DxvkGraphicsPipeline*                   pipeline,
-    const DxvkGraphicsPipelineStateInfo&    state,
-    const DxvkRenderPass*                   renderPass) {
+    DxvkGraphicsPipeline*                pipeline,
+    const DxvkGraphicsPipelineStateInfo& state,
+    const DxvkRenderPass*                renderPass) {
     {
       std::lock_guard<std::mutex> lock(m_compilerLock);
       // Emplace a new task to avoid an extra copy
@@ -91,10 +93,9 @@ namespace dxvk {
 
       // Process each task outside the lock.
       for (auto& entry : tasks) {
-        if (entry.pipeline != nullptr && entry.renderPass != nullptr) {
-          if (entry.pipeline->compilePipeline(entry.state, entry.renderPass)) {
+        if (entry.pipeline && entry.renderPass) {
+          if (entry.pipeline->compilePipeline(entry.state, entry.renderPass))
             entry.pipeline->writePipelineStateToCache(entry.state, entry.renderPass->format());
-          }
         }
       }
     }
