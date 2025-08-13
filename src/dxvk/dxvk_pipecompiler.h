@@ -4,7 +4,6 @@
 #include <condition_variable>
 #include <mutex>
 #include <queue>
-#include <vector>
 
 #include "../util/thread.h"
 #include "dxvk_include.h"
@@ -30,10 +29,10 @@ namespace dxvk {
     /**
      * \brief Compiles a pipeline asynchronously
      *
-     * This should be used to compile graphics pipeline instances asynchronously.
-     *
-     * \param [in] pipeline   The pipeline object
-     * \param [in] state      The pipeline state info object
+     * This should be used to compile graphics
+     * pipeline instances asynchronously.
+     * \param [in] pipeline The pipeline object
+     * \param [in] state The pipeline state info object
      * \param [in] renderPass The render pass object
      */
     void queueCompilation(
@@ -42,19 +41,21 @@ namespace dxvk {
       const DxvkRenderPass*                renderPass);
 
   private:
+
     struct PipelineEntry {
-      DxvkGraphicsPipeline*                pipeline{nullptr};
-      DxvkGraphicsPipelineStateInfo        state;
-      const DxvkRenderPass*                renderPass{nullptr};
+      DxvkGraphicsPipeline*                   pipeline = nullptr;
+      DxvkGraphicsPipelineStateInfo           state;
+      const DxvkRenderPass*                   renderPass = nullptr;
     };
 
-    std::atomic<bool>           m_compilerStop{false};
+    std::atomic<bool>           m_compilerStop = { false };
     std::mutex                  m_compilerLock;
     std::condition_variable     m_compilerCond;
     std::queue<PipelineEntry>   m_compilerQueue;
     std::vector<dxvk::thread>   m_compilerThreads;
 
     void runCompilerThread();
+
   };
 
-} // namespace dxvk
+}
