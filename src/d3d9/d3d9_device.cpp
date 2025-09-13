@@ -2327,13 +2327,8 @@ namespace dxvk {
     if (unlikely(pValue == nullptr))
       return D3DERR_INVALIDCALL;
 
-    *pValue = 0;
-
-    if (unlikely(Stage >= caps::TextureStageCount))
-      return D3DERR_INVALIDCALL;
-
-    if (unlikely(dxvkType >= TextureStageStateCount))
-      return D3DERR_INVALIDCALL;
+    Stage = std::min(Stage, DWORD(caps::TextureStageCount - 1));
+    dxvkType = std::min(dxvkType, D3D9TextureStageStateTypes(DXVK_TSS_COUNT - 1));
 
     *pValue = m_state.textureStages[Stage][dxvkType];
 
@@ -2499,15 +2494,16 @@ namespace dxvk {
     EmitCs([this,
       cPrimType    = PrimitiveType,
       cPrimCount   = PrimitiveCount,
-      cStartVertex = StartVertex,
-      cInstanceCount = GetInstanceCount()
+      cStartVertex = StartVertex
     ](DxvkContext* ctx) {
-      auto drawInfo = GenerateDrawInfo(cPrimType, cPrimCount, cInstanceCount);
+      uint32_t vertexCount = GetVertexCount(cPrimType, cPrimCount);
 
       ApplyPrimitiveType(ctx, cPrimType);
 
+      // Tests on Windows show that D3D9 does not do non-indexed instanced draws.
+
       ctx->draw(
-        drawInfo.vertexCount, drawInfo.instanceCount,
+        vertexCount, 1,
         cStartVertex, 0);
     });
 
@@ -2579,17 +2575,16 @@ namespace dxvk {
     EmitCs([this,
       cBufferSlice  = std::move(upSlice.slice),
       cPrimType     = PrimitiveType,
-      cPrimCount    = PrimitiveCount,
-      cInstanceCount = GetInstanceCount(),
-      cStride       = VertexStreamZeroStride
+      cStride       = VertexStreamZeroStride,
+      cVertexCount  = drawInfo.vertexCount
     ](DxvkContext* ctx) {
-      auto drawInfo = GenerateDrawInfo(cPrimType, cPrimCount, cInstanceCount);
-
       ApplyPrimitiveType(ctx, cPrimType);
+
+      // Tests on Windows show that D3D9 does not do non-indexed instanced draws.
 
       ctx->bindVertexBuffer(0, cBufferSlice, cStride);
       ctx->draw(
-        drawInfo.vertexCount, drawInfo.instanceCount,
+        cVertexCount, 1,
         0, 0);
       ctx->bindVertexBuffer(0, DxvkBufferSlice(), 0);
     });
@@ -2731,8 +2726,7 @@ namespace dxvk {
       cVertexCount   = VertexCount,
       cStartIndex    = SrcStartIndex,
       cInstanceCount = GetInstanceCount(),
-      cBufferSlice   = slice,
-      cIndexed       = m_state.indices != nullptr
+      cBufferSlice   = slice
     ](DxvkContext* ctx) {
       Rc<DxvkShader> shader = m_swvpEmulator.GetShaderModule(this, cDecl);
 
@@ -4032,13 +4026,13 @@ namespace dxvk {
           DWORD                      Stage,
           D3D9TextureStageStateTypes Type,
           DWORD                      Value) {
+    
+    // Clamp values instead of checking and returning INVALID_CALL
+    // Matches tests + Dawn of Magic 2 relies on it.
+    Stage = std::min(Stage, DWORD(caps::TextureStageCount - 1));
+    Type = std::min(Type, D3D9TextureStageStateTypes(DXVK_TSS_COUNT - 1));
+
     D3D9DeviceLock lock = LockDevice();
-
-    if (unlikely(Stage >= caps::TextureStageCount))
-      return D3DERR_INVALIDCALL;
-
-    if (unlikely(Type >= TextureStageStateCount))
-      return D3DERR_INVALIDCALL;
 
     if (unlikely(ShouldRecord()))
       return m_recorder->SetStateTextureStageState(Stage, Type, Value);
@@ -5855,12 +5849,23 @@ namespace dxvk {
     // Originally we did this only for powers of two
     // resolutions but since NEAREST filtering fixed to
     // truncate, we need to do this all the time now.
-    float cf = 0.5f - (1.0f / 128.0f);
+    constexpr float cf = 0.5f - (1.0f / 128.0f);
+
+    // How much to bias MinZ by to avoid a depth
+    // degenerate viewport.
+    // Tests show that the bias is only applied below minZ values of 0.5
+    float zBias;
+    if (vp.MinZ >= 0.5f) {
+      zBias = 0.0f;
+    } else {
+      zBias = 0.001f;
+    }
 
     viewport = VkViewport{
       float(vp.X)     + cf,    float(vp.Height + vp.Y) + cf,
       float(vp.Width),        -float(vp.Height),
-      vp.MinZ,                 vp.MaxZ,
+      std::clamp(vp.MinZ,                            0.0f, 1.0f),
+      std::clamp(std::max(vp.MaxZ, vp.MinZ + zBias), 0.0f, 1.0f),
     };
 
     // Scissor rectangles. Vulkan does not provide an easy way
