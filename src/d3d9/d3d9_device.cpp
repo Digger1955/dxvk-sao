@@ -98,7 +98,7 @@ namespace dxvk {
       }
       useRobustConstantAccess &= m_psLayout.totalSize() % m_robustUBOAlignment == 0;
     }
-    
+
     if (!useRobustConstantAccess) {
       m_vsFloatConstsCount = m_vsLayout.floatCount;
       m_vsIntConstsCount   = m_vsLayout.intCount;
@@ -948,6 +948,9 @@ namespace dxvk {
     if (srcTexInfo->Desc()->Format != dstTexInfo->Desc()->Format)
       return D3DERR_INVALIDCALL;
 
+    if (src->GetSurfaceExtent() != dst->GetSurfaceExtent())
+      return D3DERR_INVALIDCALL;
+
     if (dstTexInfo->Desc()->Pool == D3DPOOL_DEFAULT)
       return this->StretchRect(pRenderTarget, nullptr, pDestSurface, nullptr, D3DTEXF_NONE);
 
@@ -1551,7 +1554,7 @@ namespace dxvk {
       const Rc<DxvkImageView>& imageView,
       VkImageAspectFlags       aspectMask,
       VkClearValue             clearValue) {
-      
+
       VkExtent3D imageExtent = imageView->mipLevelExtent(0);
       extent.width = std::min(imageExtent.width, extent.width);
       extent.height = std::min(imageExtent.height, extent.height);
@@ -4026,7 +4029,7 @@ namespace dxvk {
           DWORD                      Stage,
           D3D9TextureStageStateTypes Type,
           DWORD                      Value) {
-    
+
     // Clamp values instead of checking and returning INVALID_CALL
     // Matches tests + Dawn of Magic 2 relies on it.
     Stage = std::min(Stage, DWORD(caps::TextureStageCount - 1));
@@ -4104,8 +4107,8 @@ namespace dxvk {
     DxvkDeviceFeatures enabled = {};
 
     // Geometry shaders are used for some meta ops
-    enabled.core.features.geometryShader = VK_TRUE;
-    enabled.core.features.robustBufferAccess = VK_TRUE;
+    enabled.core.features.geometryShader = supported.core.features.geometryShader;
+    enabled.core.features.robustBufferAccess = supported.core.features.robustBufferAccess;
     enabled.extRobustness2.robustBufferAccess2 = supported.extRobustness2.robustBufferAccess2;
 
     enabled.extMemoryPriority.memoryPriority = supported.extMemoryPriority.memoryPriority;
@@ -4122,15 +4125,15 @@ namespace dxvk {
     enabled.core.features.vertexPipelineStoresAndAtomics = supported.core.features.vertexPipelineStoresAndAtomics;
 
     // DXVK Meta
-    enabled.core.features.shaderStorageImageWriteWithoutFormat = VK_TRUE;
-    enabled.core.features.imageCubeArray = VK_TRUE;
+    enabled.core.features.shaderStorageImageWriteWithoutFormat = supported.core.features.shaderStorageImageWriteWithoutFormat;
+    enabled.core.features.imageCubeArray = supported.core.features.imageCubeArray;
 
     // SM1 level hardware
     enabled.core.features.depthClamp = supported.core.features.depthClamp;
     enabled.core.features.depthBiasClamp = supported.core.features.depthBiasClamp;
     enabled.core.features.fillModeNonSolid = supported.core.features.fillModeNonSolid;
     enabled.core.features.pipelineStatisticsQuery = supported.core.features.pipelineStatisticsQuery;
-    enabled.core.features.sampleRateShading = VK_TRUE;
+    enabled.core.features.sampleRateShading = supported.core.features.sampleRateShading;
     enabled.core.features.samplerAnisotropy = supported.core.features.samplerAnisotropy;
     enabled.core.features.shaderClipDistance = supported.core.features.shaderClipDistance;
     enabled.core.features.shaderCullDistance = supported.core.features.shaderCullDistance;
@@ -4139,24 +4142,24 @@ namespace dxvk {
     enabled.core.features.textureCompressionBC = supported.core.features.textureCompressionBC;
 
     enabled.extDepthClipEnable.depthClipEnable = supported.extDepthClipEnable.depthClipEnable;
-    enabled.extHostQueryReset.hostQueryReset = VK_TRUE;
+    enabled.extHostQueryReset.hostQueryReset = supported.extHostQueryReset.hostQueryReset;
 
     // SM2 level hardware
-    enabled.core.features.occlusionQueryPrecise = VK_TRUE;
+    enabled.core.features.occlusionQueryPrecise = supported.core.features.occlusionQueryPrecise;
 
     // SM3 level hardware
     enabled.core.features.multiViewport = supported.core.features.multiViewport;
-    enabled.core.features.independentBlend = VK_TRUE;
+    enabled.core.features.independentBlend = supported.core.features.independentBlend;
 
     // D3D10 level hardware supports this in D3D9 native.
-    enabled.core.features.fullDrawIndexUint32 = VK_TRUE;
+    enabled.core.features.fullDrawIndexUint32 = supported.core.features.fullDrawIndexUint32;
 
     // Enable depth bounds test if we support it.
     enabled.core.features.depthBounds = supported.core.features.depthBounds;
 
     if (supported.extCustomBorderColor.customBorderColorWithoutFormat) {
-      enabled.extCustomBorderColor.customBorderColors             = VK_TRUE;
-      enabled.extCustomBorderColor.customBorderColorWithoutFormat = VK_TRUE;
+      enabled.extCustomBorderColor.customBorderColors             = supported.extCustomBorderColor.customBorderColors;
+      enabled.extCustomBorderColor.customBorderColorWithoutFormat = supported.extCustomBorderColor.customBorderColorWithoutFormat;
     }
 
     enabled.extNonSeamlessCubeMap.nonSeamlessCubeMap = supported.extNonSeamlessCubeMap.nonSeamlessCubeMap;
@@ -5202,7 +5205,7 @@ namespace dxvk {
     uint32_t floatCount = m_vsFloatConstsCount;
     if (constSet.meta.needsConstantCopies) {
       auto shader = GetCommonShader(m_state.vertexShader);
-      floatCount = std::max(floatCount, shader->GetMaxDefinedConstant());
+      floatCount = std::max(floatCount, shader->GetMaxDefinedConstant() + 1);
     }
     floatCount = std::min(floatCount, constSet.meta.maxConstIndexF);
 
@@ -5283,7 +5286,7 @@ namespace dxvk {
     uint32_t floatCount = ShaderStage == DxsoProgramType::VertexShader ? m_vsFloatConstsCount : m_psFloatConstsCount;
     if (constSet.meta.needsConstantCopies) {
       auto shader = GetCommonShader(Shader);
-      floatCount = std::max(floatCount, shader->GetMaxDefinedConstant());
+      floatCount = std::max(floatCount, shader->GetMaxDefinedConstant() + 1);
     }
     floatCount = std::min(constSet.meta.maxConstIndexF, floatCount);
 
@@ -5470,7 +5473,7 @@ namespace dxvk {
 
   inline void D3D9DeviceEx::UpdateBoundRTs(uint32_t index) {
     const uint32_t bit = 1 << index;
-    
+
     m_boundRTs &= ~bit;
 
     if (m_state.renderTargets[index] != nullptr &&
@@ -6278,7 +6281,7 @@ namespace dxvk {
 
     if (inactiveMask)
       UnbindTextures(inactiveMask);
-  
+
     m_dirtyTextures &= ~usedMask;
   }
 
