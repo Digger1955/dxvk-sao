@@ -255,7 +255,7 @@ namespace dxvk {
     info.inputMask = m_inputMask;
     info.outputMask = m_outputMask;
     info.pushConstOffset = m_pushConstOffset;
-    info.pushConstSize = m_pushConstOffset;
+    info.pushConstSize = m_pushConstSize;
 
     return new DxvkShader(info, m_module.compile());
   }
@@ -482,7 +482,7 @@ namespace dxvk {
 
   void DxsoCompiler::emitVsInit() {
     if (m_moduleInfo.options.enableClipDistance)
-    m_module.enableCapability(spv::CapabilityClipDistance);
+      m_module.enableCapability(spv::CapabilityClipDistance);
 
     // Only VS needs this, because PS has
     // non-indexable specialized output regs
@@ -1360,7 +1360,7 @@ namespace dxvk {
       case DxsoComparison::Equal:        return m_module.opFOrdEqual           (typeId, a, b); break;
       case DxsoComparison::GreaterEqual: return m_module.opFOrdGreaterThanEqual(typeId, a, b); break;
       case DxsoComparison::LessThan:     return m_module.opFOrdLessThan        (typeId, a, b); break;
-      case DxsoComparison::NotEqual:     return m_module.opFOrdNotEqual        (typeId, a, b); break;
+      case DxsoComparison::NotEqual:     return m_module.opFUnordNotEqual        (typeId, a, b); break;
       case DxsoComparison::LessEqual:    return m_module.opFOrdLessThanEqual   (typeId, a, b); break;
       case DxsoComparison::Always:       return m_module.constbReplicant(true, type.ccount);   break;
     }
@@ -3908,7 +3908,7 @@ void DxsoCompiler::emitControlFlowGenericLoop(
             case VK_COMPARE_OP_EQUAL:            return m_module.opFOrdEqual           (boolType, alphaId, alphaRefId);
             case VK_COMPARE_OP_LESS_OR_EQUAL:    return m_module.opFOrdLessThanEqual   (boolType, alphaId, alphaRefId);
             case VK_COMPARE_OP_GREATER:          return m_module.opFOrdGreaterThan     (boolType, alphaId, alphaRefId);
-            case VK_COMPARE_OP_NOT_EQUAL:        return m_module.opFOrdNotEqual        (boolType, alphaId, alphaRefId);
+            case VK_COMPARE_OP_NOT_EQUAL:        return m_module.opFUnordNotEqual        (boolType, alphaId, alphaRefId);
             case VK_COMPARE_OP_GREATER_OR_EQUAL: return m_module.opFOrdGreaterThanEqual(boolType, alphaId, alphaRefId);
             default:
             case VK_COMPARE_OP_ALWAYS:           return m_module.constBool(true);
@@ -3972,7 +3972,7 @@ void DxsoCompiler::emitControlFlowGenericLoop(
       m_module.decorate(m_vs.oPos.id, spv::DecorationInvariant);
 
     if (m_moduleInfo.options.enableClipDistance)
-    this->emitVsClipping();
+      this->emitVsClipping();
 
     this->emitFunctionEnd();
   }
