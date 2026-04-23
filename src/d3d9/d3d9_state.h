@@ -25,7 +25,7 @@ namespace dxvk {
     static constexpr DWORD AlphaToCoverageDisabled = MAKEFOURCC('A', '2', 'M', '0');
     static constexpr DWORD AlphaToCoverageEnabled  = MAKEFOURCC('A', '2', 'M', '1');
   }
-  
+
   struct D3D9ClipPlane {
     float coeff[4] = {};
   };
@@ -159,7 +159,7 @@ namespace dxvk {
       float Padding[2];
     } Stages[8];
   };
-  
+
   struct D3D9VBO {
     Com<D3D9VertexBuffer, false> vertexBuffer;
 

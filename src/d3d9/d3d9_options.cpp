@@ -7,7 +7,7 @@ namespace dxvk {
   static int32_t parsePciId(const std::string& str) {
     if (str.size() != 4)
       return -1;
-    
+
     int32_t id = 0;
 
     for (size_t i = 0; i < str.size(); i++) {
@@ -72,6 +72,7 @@ namespace dxvk {
     this->alphaTestWiggleRoom           = config.getOption<bool>        ("d3d9.alphaTestWiggleRoom",           false);
     this->cachedDynamicBuffers          = config.getOption<bool>        ("d3d9.cachedDynamicBuffers",          false);
     this->deviceLocalConstantBuffers    = config.getOption<bool>        ("d3d9.deviceLocalConstantBuffers",    false);
+
     this->allowDirectBufferMapping      = config.getOption<bool>        ("d3d9.allowDirectBufferMapping",      true);
     this->seamlessCubes                 = config.getOption<bool>        ("d3d9.seamlessCubes",                 false);
 
