@@ -91,7 +91,7 @@ namespace dxvk::hud {
     renderer.drawText(16.0f,
       { position.x, position.y },
       { 1.0f, 1.0f, 1.0f, 1.0f },
-      "DXVK-Sarek " DXVK_VERSION);
+      "DXVK-SAO " DXVK_VERSION);
 
     position.y += 8.0f;
     return position;
