@@ -114,7 +114,7 @@ if platform == 'windows'
       '/LTCG', # Performs a Link-Time Code Generation
       '/INCREMENTAL:NO', # Performs a full link LTCG
       '/OPT:REF,ICF', # REF - eliminates functions and data that are never referenced; ICF - performs identical COMDAT folding
-      '/DEBUG:NONE', # Doesn't generate a PDB
+      '/DEBUG:NONE' # Doesn't generate a PDB
     ]
   endif
 
