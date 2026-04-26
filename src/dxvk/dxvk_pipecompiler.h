@@ -57,4 +57,4 @@ namespace dxvk {
     void runCompilerThread();
   };
 
-} // namespace dxvk
+}

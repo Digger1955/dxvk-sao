@@ -35,10 +35,12 @@ namespace dxvk {
 
     Logger::info(str::format("DXVK: Using ", numWorkers, " async compiler threads"));
 
+    // Reserve and create the worker threads
     m_compilerThreads.reserve(numWorkers);
     for (uint32_t i = 0; i < numWorkers; i++)
       m_compilerThreads.emplace_back([this] { this->runCompilerThread(); });
-  }
+
+    }
 
   DxvkPipelineCompiler::~DxvkPipelineCompiler() {
     {
@@ -58,8 +60,10 @@ namespace dxvk {
     const DxvkRenderPass*                renderPass) {
     {
       std::lock_guard<std::mutex> lock(m_compilerLock);
+      // Emplace a new task to avoid an extra copy
       m_compilerQueue.emplace(PipelineEntry{ pipeline, state, renderPass });
     }
+    // Only one thread needs to be notified
     m_compilerCond.notify_one();
   }
 
@@ -67,6 +71,7 @@ namespace dxvk {
     env::setThreadName("dxvk-pcompiler");
 
     while (true) {
+      // Batch drain tasks to minimize the time spent holding the lock.
       std::vector<PipelineEntry> tasks;
 
       {
@@ -75,15 +80,18 @@ namespace dxvk {
           return m_compilerStop.load() || !m_compilerQueue.empty();
         });
 
+        // If the stop flag is set and there are no remaining tasks, exit.
         if (m_compilerStop.load() && m_compilerQueue.empty())
           break;
 
+        // Drain the queue to process multiple tasks without reacquiring the lock.
         while (!m_compilerQueue.empty()) {
           tasks.push_back(std::move(m_compilerQueue.front()));
           m_compilerQueue.pop();
         }
       }
 
+      // Process each task outside the lock.
       for (auto& entry : tasks) {
         if (entry.pipeline && entry.renderPass) {
           if (entry.pipeline->compilePipeline(entry.state, entry.renderPass))
@@ -93,4 +101,4 @@ namespace dxvk {
     }
   }
 
-} // namespace dxvk
+}
