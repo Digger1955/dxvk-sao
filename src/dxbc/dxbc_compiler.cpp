@@ -6459,8 +6459,8 @@ namespace dxvk {
         { m_hs.builtinTessLevelOuter, 1 },  // FinalTriVeq0EdgeTessFactor
         { m_hs.builtinTessLevelOuter, 2 },  // FinalTriWeq0EdgeTessFactor
         { m_hs.builtinTessLevelInner, 0 },  // FinalTriInsideTessFactor
-        { m_hs.builtinTessLevelOuter, 0 },  // FinalLineDensityTessFactor
         { m_hs.builtinTessLevelOuter, 1 },  // FinalLineDetailTessFactor
+        { m_hs.builtinTessLevelOuter, 0 },  // FinalLineDensityTessFactor
       }};
       
       const TessFactor tessFactor = s_tessFactors.at(uint32_t(sv)
@@ -6737,8 +6737,10 @@ namespace dxvk {
   
   
   void DxbcCompiler::emitVsInit() {
-    m_module.enableCapability(spv::CapabilityClipDistance);
-    m_module.enableCapability(spv::CapabilityCullDistance);
+    if (m_moduleInfo.options.enableClipDistance && m_analysis->clipCullOut.numClipPlanes)
+      m_module.enableCapability(spv::CapabilityClipDistance);
+    if (m_moduleInfo.options.enableCullDistance && m_analysis->clipCullOut.numCullPlanes)
+      m_module.enableCapability(spv::CapabilityCullDistance);
     m_module.enableCapability(spv::CapabilityDrawParameters);
     
     // Declare the per-vertex output block. This is where
@@ -6781,8 +6783,10 @@ namespace dxvk {
   
   void DxbcCompiler::emitHsInit() {
     m_module.enableCapability(spv::CapabilityTessellation);
-    m_module.enableCapability(spv::CapabilityClipDistance);
-    m_module.enableCapability(spv::CapabilityCullDistance);
+    if (m_moduleInfo.options.enableClipDistance && m_analysis->clipCullOut.numClipPlanes)
+      m_module.enableCapability(spv::CapabilityClipDistance);
+    if (m_moduleInfo.options.enableCullDistance && m_analysis->clipCullOut.numCullPlanes)
+      m_module.enableCapability(spv::CapabilityCullDistance);
     
     m_hs.builtinInvocationId = emitNewBuiltinVariable(
       DxbcRegisterInfo {
@@ -6798,8 +6802,10 @@ namespace dxvk {
   
   void DxbcCompiler::emitDsInit() {
     m_module.enableCapability(spv::CapabilityTessellation);
-    m_module.enableCapability(spv::CapabilityClipDistance);
-    m_module.enableCapability(spv::CapabilityCullDistance);
+    if (m_moduleInfo.options.enableClipDistance && m_analysis->clipCullOut.numClipPlanes)
+      m_module.enableCapability(spv::CapabilityClipDistance);
+    if (m_moduleInfo.options.enableCullDistance && m_analysis->clipCullOut.numCullPlanes)
+      m_module.enableCapability(spv::CapabilityCullDistance);
     
     m_ds.builtinTessLevelOuter = emitBuiltinTessLevelOuter(spv::StorageClassInput);
     m_ds.builtinTessLevelInner = emitBuiltinTessLevelInner(spv::StorageClassInput);
@@ -6840,8 +6846,10 @@ namespace dxvk {
   
   void DxbcCompiler::emitGsInit() {
     m_module.enableCapability(spv::CapabilityGeometry);
-    m_module.enableCapability(spv::CapabilityClipDistance);
-    m_module.enableCapability(spv::CapabilityCullDistance);
+    if (m_moduleInfo.options.enableClipDistance && m_analysis->clipCullOut.numClipPlanes)
+      m_module.enableCapability(spv::CapabilityClipDistance);
+    if (m_moduleInfo.options.enableCullDistance && m_analysis->clipCullOut.numCullPlanes)
+      m_module.enableCapability(spv::CapabilityCullDistance);
 
     // Enable capabilities for xfb mode if necessary
     if (m_moduleInfo.xfb != nullptr) {
@@ -7245,6 +7253,10 @@ namespace dxvk {
           uint32_t          length,
           spv::BuiltIn      builtIn,
           spv::StorageClass storageClass) {
+    if (builtIn == spv::BuiltInClipDistance && !m_moduleInfo.options.enableClipDistance)
+      return 0;
+    if (builtIn == spv::BuiltInCullDistance && !m_moduleInfo.options.enableCullDistance)
+      return 0;
     if (length == 0)
       return 0;
     
