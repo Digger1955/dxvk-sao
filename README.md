@@ -1,4 +1,4 @@
-# DXVK Sarek-Async-Optimized (DXVK-SAO)
+# DXVK Sporif Async-Optimized (DXVK-SAO)
 
 A Vulkan 1.1-based translation layer for Direct3D 8/9/10/11 which allows running 3D applications on: 
 
@@ -7,46 +7,60 @@ A Vulkan 1.1-based translation layer for Direct3D 8/9/10/11 which allows running
 3. MacOS using Wine/CrossOver, if GPU has Vulkan driver that is Vulkan 1.1 compliant. Requires SSE2 CPU.
 4. Android using [Winlator](https://github.com/brunodev85/winlator), if GPU has Vulkan driver that is Vulkan 1.1 compliant. CPU Requirements defined by [Winlator](https://github.com/brunodev85/winlator).
 
-## Changes compared to [DXVK-Sarek-Async](https://github.com/pythonlover02/DXVK-Sarek)
+### Additional Info
 
-1. Provided various GCC (for any OS) builds of DXVK-GPLALL:
+ - [DXVK-SAO Wiki](https://github.com/Digger1955/dxvk-sao/wiki)
 
-   a) optimized for `SSE2` (`-march=x86-64, -mtune=x86-64`) CPUs with Link-Time Optimization (`LTO`, a.k.a. `-flto=auto`) and `-O3` optimization level;
+ - [Detailed Changelog](https://github.com/Digger1955/dxvk-sao/wiki/Detailed-Changelog)
 
-   b) optimized for `SSE4.2` (`-march=x86-64-v2, -mtune=intel`) and newer Intel CPUs with Link-Time Optimization (`LTO`, a.k.a. `-flto=auto`) and `-O3` optimization level.
+ - [Builds Reference Guide](https://github.com/Digger1955/dxvk-sao/wiki/Builds-Reference-Guide) - recommended to read to achieve the best results on the end-user system and **REQUIRED TO READ BEFORE PROVIDING DXVK-GPLALL AS A PART OF WINE/PROTON.**
 
-   c) optimized for `SSE4.2` (`-march=x86-64-v2, -mtune=generic`) and newer CPUs with Link-Time Optimization (`LTO`, a.k.a. `-flto=auto`) and `-O3` optimization level.
+ - [Frequently Asked Questions (FAQ)](https://github.com/Digger1955/dxvk-sao/wiki/Frequently-Asked-Questions-(FAQ)) - **REQUIRED TO READ BEFORE PROVIDING DXVK-GPLALL AS A PART OF WINE/PROTON.**
+
+ - [`dxvk.conf` Options Guide](https://github.com/Digger1955/dxvk-sao/wiki/dxvk.conf-Options-Guide) - recommended to read to achieve the best results on the end-user system and **REQUIRED TO READ BEFORE PROVIDING DXVK-GPLALL AS A PART OF WINE/PROTON.**
+
+ - [Contributing Guidelines](https://github.com/Digger1955/dxvk-sao/wiki/Contributing-Guidelines)
+
+## Changes compared to [DXVK-Sarek](https://github.com/pythonlover02/DXVK-Sarek)
+
+1. Implemented Asynchronous pipeline compilation (Async) that aims to greatly reduce shader compilation stutter by not blocking the main thread when compiling async pipelines. Authors - [jomihaka](https://github.com/jomihaka/dxvk-poe-hack) and [Sporif](https://github.com/Sporif/dxvk-async)
+
+2. Provided various GCC (for any OS) builds of DXVK-GPLALL:
+
+   a) optimized for `SSE2` (`-march=x86-64`) and tuned for older CPUs (`-mtune=x86-64`) with Link-Time Optimization (`LTO`, a.k.a. `-flto=auto`) and `-O3` optimization level;
+
+   b) optimized for `SSE4.2` (`-march=x86-64-v2`) and tuned for newer CPUs (`-mtune=generic`) with Link-Time Optimization (`LTO`, a.k.a. `-flto=auto`) and `-O3` optimization level;
+
+   c) optimized for `SSE4.2` (`-march=x86-64-v2`) and tuned for newer Intel CPUs (`-mtune=intel`) with Link-Time Optimization (`LTO`, a.k.a. `-flto=auto`) and `-O3` optimization level.
 
 Author - [Digger1955](https://github.com/Digger1955/dxvk-sao/releases)
 
-2. Provided various MSVC (requires [MSVCRT](https://www.techpowerup.com/download/visual-c-redistributable-runtime-package-all-in-one/)) builds of DXVK-GPLALL:
+3. Provided various MSVC (requires [MSVCRT](https://www.techpowerup.com/download/visual-c-redistributable-runtime-package-all-in-one/)) builds of DXVK-GPLALL:
 
-   a) optimized for `SSE2` (`/arch:SSE2`) CPUs with Link-Time Optimization (`LTO`, a.k.a. `/LTCG`) and `/O2` optimization level;
+   a) optimized for `SSE2` (`/arch:SSE2`) and tuned for older CPUs (`/favor:blend`) with Link-Time Optimization (`LTO`, a.k.a. `/LTCG`) and `/O1, /Oi, /Ob3` optimization level;
 
-   b) optimized for `SSE4.2` (`/arch:SSE4.2`) and newer Intel (`/favor:INTEL64` a.k.a. `/favor:EM64T`) CPUs with Link-Time Optimization (`LTO`, a.k.a. `/LTCG`) and `/O2` optimization level;
+   b) optimized for `AVX2` (`/arch:AVX2`) and tuned for newer AMD CPUs (`/favor:AMD64`) with Link-Time Optimization (`LTO`, a.k.a. `/LTCG`) and `/O1, /Oi, /Ob3` optimization level;
 
-   c) optimized for `AVX2` (`/arch:AVX2`) and newer AMD (`/favor:AMD64`) CPUs with Link-Time Optimization (`LTO`, a.k.a. `/LTCG`) and `/O2` optimization level.
+   c) optimized for `SSE4.2` (`/arch:SSE4.2`) and tuned for newer Intel CPUs (`/favor:INTEL64` a.k.a. `/favor:EM64T`) with Link-Time Optimization (`LTO`, a.k.a. `/LTCG`) and `/O1, /Oi, /Ob3` optimization level.
 
 Author - [Digger1955](https://github.com/Digger1955/dxvk-sao/releases)
 
-3. Implemented and enabled by defualt `Async` optimization - `m_rtBindingFrameCount >= 2`, which leads to lower peak CPU load during shader compilation process, which leads to less stutters in both amount and longevity. Author - [Digger1955](https://github.com/Digger1955/dxvk-sao/releases), scientific info - [Britt Yazel](https://gitlab.com/Ph42oN/dxvk-gplasync/-/merge_requests/12#note_2632543876)
+4. Implemented and enabled by defualt `Async` optimization - `m_rtBindingFrameCount >= 2`, which leads to lower peak CPU load during shader compilation process, which in turn leads to less stutters in both amount and longevity. Author - [Digger1955](https://github.com/Digger1955/dxvk-sao/releases), scientific info - [Britt Yazel](https://gitlab.com/Ph42oN/dxvk-gplasync/-/merge_requests/12#note_2632543876)
 
-4. Changed default number of used CPU logical threads from all to `(CPULogicalThreads - 2)`, which leads to less stuttering when compiling shaders while playing, in comparison to using all CPU logical threads. Author - [Digger1955](https://github.com/Digger1955/dxvk-sao/releases)
+5. Changed default number of used CPU logical threads from all to `(CPULogicalThreads - 2)`, which leads to less stuttering when compiling shaders while playing, in comparison to using all CPU logical threads. Author - [Digger1955](https://github.com/Digger1955/dxvk-sao/releases)
 
-5. Implemented default location for global DXVK configuration file (`dxvk.conf`) on Windows, Linux and MacOS. Author - [Ph42oN](https://gitlab.com/Ph42oN/dxvk-gplasync/)
-
-Builds Reference Guide provided in [Wiki](https://github.com/Digger1955/dxvk-gplasync-lowlatency/wiki/Builds-Reference-Guide).
+6. Implemented default location for global DXVK configuration file (`dxvk.conf`) on Windows, Linux and MacOS. Author - [Ph42oN](https://gitlab.com/Ph42oN/dxvk-gplasync/)
 
 ## How to use (Windows 7/8/8.1/10/11)
 
 1. Download DXVK-SAO package from [release](https://github.com/Digger1955/dxvk-sao/releases) page.
-2. Copy appropriate [DLL dependencies](https://github.com/Digger1955/dxvk-sao/blob/SAO-master-1.11.0/README.md#dll-dependencies) to the location of application's main executable folder.
+2. Copy appropriate [DLL dependencies](https://github.com/Digger1955/dxvk-sao?tab=readme-ov-file#dll-dependencies) to the location of application's main executable folder.
 3. Run application.
 
-**Important**: It is **STRONGLY RECOMMENDED** to create `dxvk.conf` at application's main executable folder (per-application configuration file - first priority) or at `%APPDATA%/dxvk.conf` (one global configuration file - second priority) with your desired DXVK settings.
+**Important**: It is **STRONGLY RECOMMENDED** to create `dxvk.conf` at application's main executable folder (per-application configuration file - first priority) or at `%APPDATA%/dxvk.conf` (one global configuration file - second priority) with your desired DXVK settings. Please refer to [Quick Start Guide](https://github.com/Digger1955/dxvk-sao/wiki/dxvk.conf-Options-Guide#quick-start-guide) to achieve the best results on the end-user system.
 
-## How to use (Linux/MacOS)
-In order to install a DXVK package obtained from the [release](https://github.com/Digger1955/dxvk-sao/releases) page into a given wine prefix, copy or symlink the DLLs into the following directories as follows, then open `winecfg` and manually add `native` DLL overrides for `d3d8`, `d3d9`, `d3d10core`, `d3d11` and `dxgi` under the Libraries tab.
+## How to use (Linux/MacOS/Winlator)
+In order to install a DXVK-SAO package obtained from the [release](https://github.com/Digger1955/dxvk-sao/releases) page into a given wine prefix, copy or symlink the DLLs into the following directories as follows, then open `winecfg` and manually add `native` DLL overrides for `d3d8`, `d3d9`, `d3d10core`, `d3d11` and `dxgi` under the Libraries tab.
 
 In a default Wine prefix that would be as follows:
 ```
@@ -69,7 +83,7 @@ In order to remove DXVK from a prefix, remove the DLLs and DLL overrides, and ru
 
 Tools such as Steam Play, Lutris, Bottles, Heroic Launcher, etc will automatically handle setup of dxvk on their own when enabled.
 
-**Important**: It is **STRONGLY RECOMMENDED** to create `dxvk.conf` at application's main executable folder (per-application configuration file - first priority) or at `/home/$USER/.config/dxvk.conf` (one global configuration file - second priority) with your desired DXVK settings.
+**Important**: It is **STRONGLY RECOMMENDED** to create `dxvk.conf` at application's main executable folder (per-application configuration file - first priority) or at `%APPDATA%/dxvk.conf` (one global configuration file - second priority) with your desired DXVK settings. Please refer to [Quick Start Guide](https://github.com/Digger1955/dxvk-sao/wiki/dxvk.conf-Options-Guide#quick-start-guide) to achieve the best results on the end-user system.
 
 ## DLL dependencies 
 Listed below are the DLL requirements for using DXVK with any single API.
@@ -168,9 +182,9 @@ Originally started as hacky solution for shader compilation stutter in dxvk. Sim
 
 Enabling this solution results in a lot less shader compilation stuttering by not blocking the main thread when compiling async pipelines and (not necessarily) miscellaneous graphical issues while shaders are compiling for the first time.
 
-Asynchronous pipeline compilation is enabled `dxvk.enableAsync = True` in `dxvk.conf`. It is enabled by default.
+Asynchronous pipeline compilation is enabled by `dxvk.enableAsync = True` config option in `dxvk.conf`. It is enabled by default.
 
-Asynchronous pipeline compilation is disabled `dxvk.enableAsync = False` in `dxvk.conf`.
+Asynchronous pipeline compilation is disabled by `dxvk.enableAsync = False` config option in `dxvk.conf`.
 
 ## Shader compilation
 
