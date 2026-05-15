@@ -9,9 +9,10 @@ if [ -z "$1" ] || [ -z "$2" ]; then
 fi
 
 DXVK_VERSION="$1"
-DXVK_SRC_DIR="$(dirname "$(readlink -f "$0")")"
-DXVK_BUILD_DIR="$(realpath "$2")/dxvk-async-$DXVK_VERSION"
-DXVK_ARCHIVE_PATH="$(realpath "$2")/dxvk-async-$DXVK_VERSION.tar.gz"
+DXVK_SRC_DIR=$(readlink -f "$0")
+DXVK_SRC_DIR=$(dirname "$DXVK_SRC_DIR")
+DXVK_BUILD_DIR=$(realpath "$2")"/dxvk-SAO-$DXVK_VERSION"
+DXVK_ARCHIVE_PATH=$(realpath "$2")"/dxvk-SAO-$DXVK_VERSION.tar.gz"
 
 if [ -e "$DXVK_BUILD_DIR" ]; then
   echo "Build directory $DXVK_BUILD_DIR already exists"
@@ -23,6 +24,8 @@ shift 2
 opt_nopackage=0
 opt_devbuild=0
 opt_buildid=false
+opt_64_only=0
+opt_32_only=0
 
 crossfile="build-win"
 
@@ -37,6 +40,12 @@ while [ $# -gt 0 ]; do
     ;;
   "--build-id")
     opt_buildid=true
+    ;;
+  "--64-only")
+    opt_64_only=1
+    ;;
+  "--32-only")
+    opt_32_only=1
     ;;
   *)
     echo "Unrecognized option: $1" >&2
@@ -82,8 +91,12 @@ function package {
   rm -R "dxvk-$DXVK_VERSION"
 }
 
-build_arch 64
-build_arch 32
+if [ $opt_32_only -eq 0 ]; then
+  build_arch 64
+fi
+if [ $opt_64_only -eq 0 ]; then
+  build_arch 32
+fi
 
 if [ $opt_nopackage -eq 0 ]; then
   package
