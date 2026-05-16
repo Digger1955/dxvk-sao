@@ -91,7 +91,7 @@ namespace dxvk::hud {
     renderer.drawText(16.0f,
       { position.x, position.y },
       { 1.0f, 1.0f, 1.0f, 1.0f },
-      "DXVK-SAO " DXVK_VERSION);
+      "DXVK-Sarek " DXVK_VERSION);
 
     position.y += 8.0f;
     return position;
@@ -99,7 +99,7 @@ namespace dxvk::hud {
 
 
   HudClientApiItem::HudClientApiItem(std::string api)
-  : m_api(api) {
+  : m_api(std::move(api)) {
 
   }
 
@@ -128,14 +128,14 @@ namespace dxvk::hud {
     VkPhysicalDeviceProperties props = device->adapter()->deviceProperties();
 
     m_deviceName = props.deviceName;
-    m_vulkanVer = str::format("VLK: ",
-      VK_VERSION_MAJOR(props.apiVersion), ".",
-      VK_VERSION_MINOR(props.apiVersion), ".",
-      VK_VERSION_PATCH(props.apiVersion));
-    m_driverVer = str::format("VLK Drv: ",
+    m_driverVer = str::format("Driver: ",
       VK_VERSION_MAJOR(props.driverVersion), ".",
       VK_VERSION_MINOR(props.driverVersion), ".",
       VK_VERSION_PATCH(props.driverVersion));
+    m_vulkanVer = str::format("Vulkan: ",
+      VK_VERSION_MAJOR(props.apiVersion), ".",
+      VK_VERSION_MINOR(props.apiVersion), ".",
+      VK_VERSION_PATCH(props.apiVersion));
   }
 
 
